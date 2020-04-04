@@ -34,7 +34,7 @@ router.post("/", async (req: IRequest, res: IResponse) => {
       }
     ]);
 
-    if (!user) throw "Usuário e senha inválidos.";
+    if (!user) return res.badRequest("Usuário e senha inválidos.");
     const sessionId = createSession(user._id);
     res.ok(sessionId);
   } catch (e) {
