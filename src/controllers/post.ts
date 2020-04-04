@@ -31,7 +31,7 @@ router.get("/", async (req: IRequest, res: IResponse) => {
       { $match: { _id: { $in: [req.session.userId] } } },
     ]);
 
-    const filter = [...user.following.map((item) => item.user_id), user._id];
+    const filter = [...(user.following || []).map((item) => item.user_id), user._id];
 
     let result = (
       await postCollection.getPosts([
