@@ -4,6 +4,7 @@ export interface IPostCollection {
   _id?: ObjectId;
   user_id: ObjectId;
   comments: IPostComment[];
+  likes: ObjectId[];
   date?: Date;
   text: string;
 }

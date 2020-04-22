@@ -14,6 +14,13 @@ export function middleWare(req: IRequest, res: IResponse, next: () => void) {
     if (data) return res.status(200).json(data);
     return res.status(200).json();
   };
+  res.actionDenied = () => {
+    return res
+      .status(203)
+      .json(
+        createErrorMessage("Você não tem permissão para executar esta ação.")
+      );
+  };
   res.unauthorized = (e: any) => {
     return res.status(401).json(createErrorMessage(e || "Não autorizado."));
   };
@@ -23,8 +30,15 @@ export function middleWare(req: IRequest, res: IResponse, next: () => void) {
   res.badRequest = (e: any) => {
     return res.status(400).json(createErrorMessage(e));
   };
-
   const pathRequest = req.originalUrl;
+
+  //static files
+  if (
+    pathRequest.indexOf("/sounds/") > -1 ||
+    pathRequest.indexOf("/images/") > -1
+  ) {
+    return next();
+  }
   const method = req.method;
   const pathMethod = whiteListPaths[pathRequest];
   const passThrout = pathMethod && pathMethod === method;

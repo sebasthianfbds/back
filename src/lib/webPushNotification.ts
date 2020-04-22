@@ -15,8 +15,8 @@ export function webPushNotify(
       data: action,
       title: notification.title || "Nova notificação",
       body: notification.message,
-      icon: notification.icon || "assets/icons/icon-512x512.png"
-    }
+      icon: notification.icon || "assets/icons/icon-512x512.png",
+    },
   };
   webpush
     .sendNotification(subscription, JSON.stringify(notificationPayload))

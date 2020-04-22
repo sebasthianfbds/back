@@ -16,8 +16,8 @@ StartServer({
     url: environment.mongodb,
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    dbs
-  }
+    dbs,
+  },
 });
 
-// heroku logs --tail --app projeto-mack
+// heroku logs --tail --app nederapp

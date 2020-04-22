@@ -40,7 +40,13 @@ export async function createUser(user: IRegisterRequest) {
     ]);
     if (hasUser) throw "Usuário ja cadastrado.";
     user.password = encrypt(user.password);
-    await collection.insertOne(user);
+    const newUser: IUser = {
+      name: user.name,
+      email: user.email,
+      password: user.password,
+      following: [],
+    };
+    await collection.insertOne(newUser);
   } catch (e) {
     throw "Erro criando usuário: " + e;
   }
@@ -82,20 +88,18 @@ export async function follow(payload: {
 }) {
   try {
     const result = await collection.findOne({
-      "following.user_id": payload.followingUserId,
+      _id: payload.followerUserId,
+      following: payload.followingUserId,
     });
-    if (!result) {
+    if (!result)
       await collection.updateOne(
         { _id: payload.followerUserId },
         {
           $push: {
-            following: {
-              user_id: payload.followingUserId,
-            },
+            following: payload.followingUserId,
           },
         }
       );
-    }
   } catch (e) {
     throw "Erro ao seguir usuário: " + e;
   }
@@ -106,10 +110,15 @@ export async function unfollow(payload: {
   followingUserId: ObjectId;
 }) {
   try {
-    await collection.updateOne(
-      { _id: payload.followerUserId },
-      { $pull: { following: { user_id: payload.followingUserId } } }
-    );
+    const result = await collection.findOne({
+      _id: payload.followerUserId,
+      following: payload.followingUserId,
+    });
+    if (result)
+      await collection.updateOne(
+        { _id: payload.followerUserId },
+        { $pull: { following: payload.followingUserId } }
+      );
   } catch (e) {
     throw "Erro ao seguir usuário: " + e;
   }
@@ -121,7 +130,8 @@ export async function following(payload: {
 }): Promise<boolean> {
   try {
     const result = await collection.findOne({
-      "following.user_id": payload.followingUserId,
+      _id: payload.followerUserId,
+      following: payload.followingUserId,
     });
     if (result) return true;
     else return false;

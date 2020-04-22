@@ -1,6 +1,6 @@
 import { getColletion } from "nd5-mongodb-server/mongo";
 import { environment } from "@env/environment.prod";
-import { getUser } from "@collections/users/users";
+import { getUser, getAll } from "@collections/users/users";
 import { ObjectId } from "mongodb";
 import { IPostResponse, IPostCommentRequest } from "@interfaces/request/post";
 import { IPostPublishRequest } from "@interfaces/request/post";
@@ -8,6 +8,7 @@ import { IPostCollection } from "@interfaces/collection/post";
 import { IUser } from "@interfaces/collection/user";
 import { webPushNotify } from "@lib/webPushNotification";
 import { ioEmit } from "@lib/socket";
+import { ISession } from "@interfaces/http/core";
 
 const { collection } = getColletion({
   collection: "posts",
@@ -57,9 +58,13 @@ export async function comment(payload: IPostCommentRequest) {
   });
 
   if (!(user._id as ObjectId).equals(userOwner._id))
-    webPushNotify(userOwner.notificationSubscription, {
-      message: "Novo comentário no seu post!",
-    });
+    webPushNotify(
+      userOwner.notificationSubscription,
+      {
+        message: "Novo comentário no seu post!",
+      },
+      `post/${payload.post_id}`
+    );
 }
 
 export async function getPostComments(postId: string) {
@@ -110,7 +115,10 @@ export async function getPostComments(postId: string) {
 
 // interface IPostCommentsResponse {}
 
-export async function getPosts(filter?: any[]): Promise<IPostResponse[]> {
+export async function getPosts(opts: {
+  userId: ObjectId;
+  filter?: any[];
+}): Promise<IPostResponse[]> {
   try {
     let aggregate: any[] = [
       {
@@ -126,7 +134,15 @@ export async function getPosts(filter?: any[]): Promise<IPostResponse[]> {
       },
       {
         $set: {
-          commentLength: { $size: "$comments" },
+          commentLength: { $size: { $ifNull: ["$comments", []] } },
+          likesLength: { $size: { $ifNull: ["$likes", []] } },
+          liked: {
+            $cond: {
+              if: { $in: [opts.userId, { $ifNull: ["$likes", []] }] },
+              then: true,
+              else: false,
+            },
+          },
         },
       },
       {
@@ -134,11 +150,12 @@ export async function getPosts(filter?: any[]): Promise<IPostResponse[]> {
           "user.password": 0,
           "user.email": 0,
           comments: 0,
+          likes: 0,
         },
       },
     ];
 
-    if (filter) aggregate = aggregate.concat(filter);
+    if (opts.filter) aggregate = aggregate.concat(opts.filter);
 
     return (await collection.aggregate(aggregate).toArray()).reverse();
   } catch (e) {
@@ -159,6 +176,7 @@ export async function publish(payload: IPostPublishRequest): Promise<any> {
     let post: IPostCollection = {
       user_id: new ObjectId(payload.user_id),
       comments: [],
+      likes: [],
       date: new Date(),
       text: payload.text,
     };
@@ -166,5 +184,76 @@ export async function publish(payload: IPostPublishRequest): Promise<any> {
     return (await collection.insertOne(post)).insertedId;
   } catch (e) {
     throw "Erro publicando post: " + e;
+  }
+}
+
+export async function emitNewPost(s: {
+  session: ISession;
+  insertedId: string;
+}) {
+  const newPost = await getPosts({
+    userId: s.session.userId,
+    filter: [{ $match: { _id: { $in: [new ObjectId(s.insertedId)] } } }],
+  });
+
+  (
+    await getAll([
+      {
+        $match: {
+          following: s.session.userId,
+        },
+      },
+    ])
+  ).map((item) => {
+    ioEmit(
+      "on_new_post",
+      {
+        session: s.session,
+        userId: item._id,
+      },
+      newPost
+    );
+  });
+
+  // (await getAll()).map((user) => {
+  //   if (!post.user_id.equals(user._id) && user.notificationSubscription) {
+  //     webPushNotify(
+  //       user.notificationSubscription,
+  //       {
+  //         message: "Nova postagem disponivel =)",
+  //       },
+  //       `post/${s.insertedId}`
+  //     );
+  //   }
+  // });
+}
+
+export async function like(payload: { userId: ObjectId; postId: ObjectId }) {
+  try {
+    const result = await collection.findOne({
+      _id: payload.postId,
+      likes: payload.userId,
+    });
+    if (!result) {
+      await collection.findOneAndUpdate(
+        { _id: payload.postId },
+        {
+          $push: {
+            likes: payload.userId,
+          },
+        }
+      );
+    } else {
+      await collection.findOneAndUpdate(
+        { _id: payload.postId },
+        {
+          $pull: {
+            likes: payload.userId,
+          },
+        }
+      );
+    }
+  } catch (e) {
+    throw "Erro ao curtir publicação " + e;
   }
 }

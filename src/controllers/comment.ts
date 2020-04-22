@@ -7,7 +7,7 @@ const router = GetRouter();
 
 router.get("/", async (req: IRequest, res: IResponse) => {
   try {
-    let post_id = req.query.post_id;
+    const post_id = req.query.post_id as any;
     let result = await postCollection.getPostComments(post_id);
     res.ok(result);
   } catch (e) {

@@ -11,7 +11,7 @@ const router = GetRouter();
 
 router.get("/search", async (req: IRequest, res: IResponse) => {
   try {
-    const name = req.query.name;
+    const name = req.query.name as any;
     const filter = [];
     if (name) {
       filter.push({
@@ -44,7 +44,7 @@ router.get("/search", async (req: IRequest, res: IResponse) => {
 router.get("/profile", async (req: IRequest, res: IResponse) => {
   try {
     const session = req.session;
-    const name = decodeURI(req.query.name);
+    const name = decodeURI(req.query.name as any);
 
     if (!name || name === "undefined" || name === "null")
       return res.badRequest(`Usuário '${name}' não encontrado.`);
@@ -58,13 +58,13 @@ router.get("/profile", async (req: IRequest, res: IResponse) => {
       data: undefined,
       posts: undefined,
       myProfile: undefined,
-      following: undefined,
+      following: false,
     };
 
     userData.data = await userCollection.getUser([
       {
         $match: {
-          name: { $in: [name] },
+          name: name,
         },
       },
       {
@@ -78,20 +78,22 @@ router.get("/profile", async (req: IRequest, res: IResponse) => {
     if (!userData.data)
       return res.badRequest(`Usuário '${name}' não encontrado.`);
 
-    userData.posts = await postColletion.getPosts([
-      {
-        $match: {
-          user_id: { $in: [userData.data._id] },
+    userData.posts = await postColletion.getPosts({
+      userId: session.userId,
+      filter: [
+        {
+          $match: {
+            user_id: userData.data._id,
+          },
         },
-      },
-    ]);
+      ],
+    });
     userData.posts.map((post) => {
       post.canEdit = new ObjectId(post.user._id).equals(req.session.userId);
       return post;
     });
     userData.myProfile = session.userId.equals(new ObjectId(userData.data._id));
     if (!userData.myProfile) {
-      //check if follow user
       userData.following = await userCollection.following({
         followerUserId: session.userId,
         followingUserId: userData.data._id,

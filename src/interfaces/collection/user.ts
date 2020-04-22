@@ -4,6 +4,6 @@ export interface IUser {
   email?: string;
   password?: string;
   imageUrl?: string;
-  notificationSubscription: any;
-  following: { user_id: string }[];
+  notificationSubscription?: any;
+  following?: any[];
 }

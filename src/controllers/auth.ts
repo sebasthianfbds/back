@@ -4,7 +4,7 @@ import {
   destroySession,
   destroySessionId,
   getSession,
-  createSession
+  createSession,
 } from "@lib/session";
 import { ILoginRequest } from "@interfaces/request/auth";
 import { IRequest, IResponse } from "@interfaces/http/core";
@@ -29,9 +29,9 @@ router.post("/", async (req: IRequest, res: IResponse) => {
       {
         $match: {
           email: { $in: [data.email] },
-          password: { $in: [encrypt(data.password)] }
-        }
-      }
+          password: { $in: [encrypt(data.password)] },
+        },
+      },
     ]);
 
     if (!user) return res.badRequest("Usuário e senha inválidos.");
