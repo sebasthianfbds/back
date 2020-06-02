@@ -58,7 +58,7 @@ router.get("/user", async (req: IRequest, res: IResponse) => {
     let result = (
       await postCollection.getPosts({
         userId: session.userId,
-        filter: [{ $match: { "user._id": { $in: [session.userId] } } }],
+        filter: [{ $match: { "user._id": session.userId } }],
       })
     ).map((post) => {
       post.canEdit = new ObjectId(post.user._id).equals(req.session.userId);

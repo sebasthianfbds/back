@@ -6,6 +6,7 @@ export interface IRequestUpdateUser {
   email: string;
   password?: string;
   imageUrl: string;
+  details?: string;
 }
 
 export interface IRequestSubscriptionUser {
@@ -17,4 +18,5 @@ export interface IRegisterRequest {
   name: string;
   email: string;
   password: string;
+  type: string;
 }

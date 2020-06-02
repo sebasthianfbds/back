@@ -28,15 +28,15 @@ router.post("/", async (req: IRequest, res: IResponse) => {
     let user = await getUser([
       {
         $match: {
-          email: { $in: [data.email] },
-          password: { $in: [encrypt(data.password)] },
+          email: data.email,
+          password: encrypt(data.password),
         },
       },
     ]);
 
     if (!user) return res.badRequest("Usuário e senha inválidos.");
     const sessionId = createSession(user._id);
-    res.ok(sessionId);
+    res.ok({ token: sessionId, permission: user.type });
   } catch (e) {
     destroySession(req.session);
     res.unauthorized(e);

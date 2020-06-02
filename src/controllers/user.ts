@@ -157,7 +157,7 @@ router.get("/settings", async (req: IRequest, res: IResponse) => {
     let user = await userCollection.getUser([
       {
         $match: {
-          _id: { $in: [session.userId] },
+          _id: session.userId,
         },
       },
       {

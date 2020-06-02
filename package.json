@@ -13,12 +13,8 @@
     "npm": "6.x"
   },
   "private": true,
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/evandroneder/server.git"
-  },
   "keywords": [],
-  "author": "Evandro Neder Rosa",
+  "author": "",
   "license": "ISC",
   "devDependencies": {
     "nodemon": "2.0.2",

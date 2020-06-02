@@ -6,4 +6,11 @@ export interface IUser {
   imageUrl?: string;
   notificationSubscription?: any;
   following?: any[];
+  type?: string;
+  details?: string;
+}
+
+export enum userType {
+  pesquisador = "PESQUISADOR",
+  aluno = "ALUNO",
 }

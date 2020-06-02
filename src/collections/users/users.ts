@@ -35,9 +35,7 @@ export async function getUser(filter?: any[]): Promise<IUser> {
 
 export async function createUser(user: IRegisterRequest) {
   try {
-    const hasUser = await getUser([
-      { $match: { email: { $in: [user.email] } } },
-    ]);
+    const hasUser = await getUser([{ $match: { email: user.email } }]);
     if (hasUser) throw "Usuário ja cadastrado.";
     user.password = encrypt(user.password);
     const newUser: IUser = {
@@ -45,6 +43,7 @@ export async function createUser(user: IRegisterRequest) {
       email: user.email,
       password: user.password,
       following: [],
+      type: user.type,
     };
     await collection.insertOne(newUser);
   } catch (e) {

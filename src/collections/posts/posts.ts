@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 import { IPostResponse, IPostCommentRequest } from "@interfaces/request/post";
 import { IPostPublishRequest } from "@interfaces/request/post";
 import { IPostCollection } from "@interfaces/collection/post";
-import { IUser } from "@interfaces/collection/user";
+import { IUser, userType } from "@interfaces/collection/user";
 import { webPushNotify } from "@lib/webPushNotification";
 import { ioEmit } from "@lib/socket";
 import { ISession } from "@interfaces/http/core";
@@ -26,9 +26,7 @@ export async function getPost(postId: string) {
 export async function comment(payload: IPostCommentRequest) {
   const post = await getPost(payload.post_id);
   if (!post) throw "Publicação não encontrada.";
-  const userOwner = await getUser([
-    { $match: { _id: { $in: [post.user_id] } } },
-  ]);
+  const userOwner = await getUser([{ $match: { _id: post.user_id } }]);
   if (!userOwner) throw "Usuário responsável pela publicação não encontrado.";
 
   await collection.updateOne(
@@ -44,7 +42,7 @@ export async function comment(payload: IPostCommentRequest) {
   );
 
   const user = await getUser([
-    { $match: { _id: { $in: [new ObjectId(payload.user_id)] } } },
+    { $match: { _id: new ObjectId(payload.user_id) } },
   ]);
 
   ioEmit("on_new_comment", payload.post_id, {
@@ -73,9 +71,7 @@ export async function getPostComments(postId: string) {
       .aggregate([
         {
           $match: {
-            _id: {
-              $in: [new ObjectId(postId)],
-            },
+            _id: new ObjectId(postId),
           },
         },
         {
@@ -168,7 +164,8 @@ export async function publish(payload: IPostPublishRequest): Promise<any> {
     let user: IUser = await getUser([
       {
         $match: {
-          _id: { $in: [payload.user_id] },
+          _id: payload.user_id,
+          type: userType.pesquisador,
         },
       },
     ]);
@@ -193,7 +190,7 @@ export async function emitNewPost(s: {
 }) {
   const newPost = await getPosts({
     userId: s.session.userId,
-    filter: [{ $match: { _id: { $in: [new ObjectId(s.insertedId)] } } }],
+    filter: [{ $match: { _id: new ObjectId(s.insertedId) } }],
   });
 
   (

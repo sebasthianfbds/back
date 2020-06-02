@@ -26,4 +26,5 @@ router.post("/", async (req: IRequest, res: IResponse) => {
     res.error(e);
   }
 });
+
 module.exports = router;
