@@ -23,9 +23,11 @@
   "dependencies": {
     "@types/mongodb": "3.5.2",
     "@types/socket.io": "2.1.4",
+    "fs-extra": "^9.0.1",
     "md5": "2.2.1",
     "module-alias": "^2.2.2",
     "mongodb": "3.5.5",
+    "multer": "^1.4.2",
     "nd5-mongodb-server": "^1.7.1",
     "typescript": "3.8.3",
     "web-push": "^3.4.3"

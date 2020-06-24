@@ -6,8 +6,30 @@ import { GetRouter } from "nd5-mongodb-server/core";
 import { IUser } from "@interfaces/collection/user";
 import { IPostResponse } from "@interfaces/request/post";
 import { ObjectId } from "mongodb";
+import { join } from "path";
+import * as p from "fs";
 
 const router = GetRouter();
+
+router.get("/sugestion", async (req: IRequest, res: IResponse) => {
+  try {
+    const session = req.session;
+    const user = await userCollection.getUser([
+      { $match: { _id: session.userId } },
+    ]);
+
+    if (!user) return res.badRequest(`Usuário não encontrado.`);
+
+    const sugestions = await userCollection.getAll([
+      { $match: { _id: { $nin: user?.following || [] } } },
+      { $sample: { size: 5 } },
+      { $limit: 5 },
+    ]);
+    res.ok(sugestions);
+  } catch (e) {
+    res.error(e);
+  }
+});
 
 router.get("/search", async (req: IRequest, res: IResponse) => {
   try {
@@ -115,6 +137,31 @@ router.post("/", async (req: IRequest, res: IResponse) => {
   }
 });
 
+const multer = require("multer");
+
+var storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    var path = "./uploads";
+    if (!p.existsSync(path)) p.mkdirSync(path);
+    path = path + "/" + req.session.userId.toHexString();
+    if (!p.existsSync(path)) p.mkdirSync(path);
+    cb(null, "./" + path);
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  },
+});
+
+const fs = require("fs-extra");
+
+var upload = multer({
+  storage: storage,
+}).single("file");
+
+router.post("/file", upload, async (req: IRequest, res: IResponse) => {
+  res.ok();
+});
+
 router.put("/", async (req: IRequest, res: IResponse) => {
   try {
     const session = req.session;
@@ -151,6 +198,27 @@ router.post("/unfollow", async (req: IRequest, res: IResponse) => {
   }
 });
 
+router.get("/download", async (req: IRequest, res: IResponse) => {
+  if (p.existsSync("./uploads/" + req.session.userId.toHexString())) {
+    const files = p.readdirSync(
+      "./uploads/" + req.session.userId.toHexString()
+    );
+    if (files.length > 0)
+      res.sendFile(
+        join(
+          __dirname,
+          "..",
+          "..",
+          "..",
+          "uploads",
+          req.session.userId.toHexString(),
+          files[0]
+        )
+      );
+    else res.ok();
+  } else res.ok();
+});
+
 router.get("/settings", async (req: IRequest, res: IResponse) => {
   try {
     const session = req.session;
@@ -168,7 +236,16 @@ router.get("/settings", async (req: IRequest, res: IResponse) => {
         },
       },
     ]);
-    res.ok(user);
+
+    var files = [];
+
+    if (
+      p.existsSync("./uploads") &&
+      p.existsSync("./uploads/" + req.session.userId.toHexString())
+    ) {
+      files = p.readdirSync("./uploads/" + req.session.userId.toHexString());
+    }
+    res.ok({ ...user, ...{ pdf: files.length > 0 ? files[0] : "" } });
   } catch (e) {
     res.error(e);
   }

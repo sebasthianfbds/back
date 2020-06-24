@@ -109,7 +109,20 @@ export async function getPostComments(postId: string) {
   ).reverse();
 }
 
-// interface IPostCommentsResponse {}
+export async function eidtPost(post: IPostPublishRequest) {
+  try {
+    await collection.updateOne(
+      { _id: new ObjectId(post._id) },
+      {
+        $set: {
+          text: post.text,
+        },
+      }
+    );
+  } catch (e) {
+    throw "Erro alterando post: " + e;
+  }
+}
 
 export async function getPosts(opts: {
   userId: ObjectId;
