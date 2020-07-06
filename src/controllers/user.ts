@@ -20,7 +20,7 @@ router.get("/sugestion", async (req: IRequest, res: IResponse) => {
 
     if (!user) return res.badRequest(`Usuário não encontrado.`);
 
-    const sugestions = await userCollection.getAll([
+    const sugestions = await userCollection.getAllUsers([
       { $match: { _id: { $nin: user?.following || [] } } },
       { $sample: { size: 5 } },
       { $limit: 5 },
@@ -34,7 +34,7 @@ router.get("/sugestion", async (req: IRequest, res: IResponse) => {
 router.get("/search", async (req: IRequest, res: IResponse) => {
   try {
     const name = req.query.name as any;
-    const filter = [];
+    var filter = [];
     if (name) {
       filter.push({
         $match: {
@@ -47,8 +47,27 @@ router.get("/search", async (req: IRequest, res: IResponse) => {
         notificationSubscription: 0,
       },
     });
-    let result = await userCollection.getAll(filter);
-    res.ok(result);
+    let result = await userCollection.getAllUsers(filter);
+
+    filter = [];
+
+    if (name) {
+      filter.push({
+        $match: {
+          instituicao: RegExp(name, "i"),
+        },
+      });
+    }
+    filter.push({
+      $project: {
+        notificationSubscription: 0,
+      },
+    });
+    let result2 = await userCollection.getAllUsers(filter);
+
+    const results = result.concat(result2);
+
+    res.ok(results);
   } catch (e) {
     res.error(e);
   }
@@ -56,7 +75,7 @@ router.get("/search", async (req: IRequest, res: IResponse) => {
 
 router.get("/search", async (req: IRequest, res: IResponse) => {
   try {
-    let result = await userCollection.getAll();
+    let result = await userCollection.getAllUsers();
     res.ok(result);
   } catch (e) {
     res.error(e);
@@ -112,6 +131,20 @@ router.get("/profile", async (req: IRequest, res: IResponse) => {
     });
     userData.posts.map((post) => {
       post.canEdit = new ObjectId(post.user._id).equals(req.session.userId);
+
+      var files = [];
+
+      if (
+        p.existsSync(
+          "./uploads/posts/" + req.session.userId.toHexString() + "/" + post._id
+        )
+      ) {
+        files = p.readdirSync(
+          "./uploads/posts/" + req.session.userId.toHexString() + "/" + post._id
+        );
+      }
+      post.pdf = files.length > 0 ? files[0] : "";
+
       return post;
     });
     userData.myProfile = session.userId.equals(new ObjectId(userData.data._id));
@@ -121,6 +154,17 @@ router.get("/profile", async (req: IRequest, res: IResponse) => {
         followingUserId: userData.data._id,
       });
     }
+
+    var files = [];
+
+    if (
+      p.existsSync("./uploads") &&
+      p.existsSync("./uploads/" + req.session.userId.toHexString())
+    ) {
+      files = p.readdirSync("./uploads/" + req.session.userId.toHexString());
+    }
+    userData.data.pdf = files.length > 0 ? files[0] : "";
+
     res.ok(userData);
   } catch (e) {
     res.error(e);

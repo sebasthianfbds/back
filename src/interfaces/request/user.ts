@@ -19,4 +19,6 @@ export interface IRegisterRequest {
   email: string;
   password: string;
   type: string;
+  instituicao: string;
+  interesses: string[];
 }

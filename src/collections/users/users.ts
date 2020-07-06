@@ -16,7 +16,7 @@ const { collection } = getColletion({
   db: environment.db,
 });
 
-export async function getAll(filter?: any[]) {
+export async function getAllUsers(filter?: any[]) {
   try {
     return await collection.aggregate<IUser>(filter).toArray();
   } catch (e) {
@@ -26,7 +26,7 @@ export async function getAll(filter?: any[]) {
 
 export async function getUser(filter?: any[]): Promise<IUser> {
   try {
-    let users = await getAll(filter);
+    let users = await getAllUsers(filter);
     return users[0];
   } catch (e) {
     throw "Erro criando usuário: " + e;
@@ -44,6 +44,8 @@ export async function createUser(user: IRegisterRequest) {
       password: user.password,
       following: [],
       type: user.type,
+      instituicao: user.instituicao,
+      interesses: user.interesses,
     };
     await collection.insertOne(newUser);
   } catch (e) {

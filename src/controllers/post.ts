@@ -18,6 +18,18 @@ router.delete("/", async (req: IRequest, res: IResponse) => {
       return res.actionDenied();
     else {
       await postCollection.remove(id);
+      try {
+        if (
+          p.existsSync(
+            "./uploads/posts/" + req.session.userId.toHexString() + "/" + id
+          )
+        ) {
+          p.rmdirSync(
+            "./uploads/posts/" + req.session.userId.toHexString() + "/" + id,
+            { recursive: true }
+          );
+        }
+      } catch {}
       res.ok();
     }
   } catch (e) {
@@ -118,7 +130,7 @@ router.put("/", async (req: IRequest, res: IResponse) => {
 
     if (!result) res.badRequest("post nao encontrado.");
 
-    await postCollection.eidtPost(post);
+    await postCollection.editPost(post);
 
     res.ok();
   } catch (e) {

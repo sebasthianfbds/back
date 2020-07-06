@@ -6,6 +6,11 @@ export interface IPostPublishRequest {
   _id?: ObjectId;
   user_id: ObjectId;
   text: string;
+  title: string;
+  datep: string;
+  locale: string;
+  url: string;
+  wordsKey: string;
 }
 
 export interface IPostCommentRequest {

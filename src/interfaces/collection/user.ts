@@ -8,9 +8,13 @@ export interface IUser {
   following?: any[];
   type?: string;
   details?: string;
+  pdf?: string;
+  instituicao: string;
+  interesses: string[];
 }
 
 export enum userType {
   pesquisador = "PESQUISADOR",
   aluno = "ALUNO",
+  adm = "ADM",
 }

@@ -1,6 +1,6 @@
 import { getColletion } from "nd5-mongodb-server/mongo";
 import { environment } from "@env/environment.prod";
-import { getUser, getAll } from "@collections/users/users";
+import { getUser, getAllUsers } from "@collections/users/users";
 import { ObjectId } from "mongodb";
 import { IPostResponse, IPostCommentRequest } from "@interfaces/request/post";
 import { IPostPublishRequest } from "@interfaces/request/post";
@@ -14,6 +14,14 @@ const { collection } = getColletion({
   collection: "posts",
   db: environment.db,
 });
+
+export async function getAllPosts(filter?: any[]) {
+  try {
+    return await collection.aggregate<IPostCollection>(filter).toArray();
+  } catch (e) {
+    throw "Erro buscando posts: " + e;
+  }
+}
 
 export async function remove(postId: string) {
   return await collection.deleteOne({ _id: new ObjectId(postId) });
@@ -109,13 +117,18 @@ export async function getPostComments(postId: string) {
   ).reverse();
 }
 
-export async function eidtPost(post: IPostPublishRequest) {
+export async function editPost(post: IPostPublishRequest) {
   try {
     await collection.updateOne(
       { _id: new ObjectId(post._id) },
       {
         $set: {
           text: post.text,
+          title: post.title,
+          locale: post.locale,
+          url: post.url,
+          wordsKey: post.wordsKey,
+          datep: post.datep,
         },
       }
     );
@@ -189,6 +202,11 @@ export async function publish(payload: IPostPublishRequest): Promise<any> {
       likes: [],
       date: new Date(),
       text: payload.text,
+      title: payload.title,
+      datep: payload.datep,
+      locale: payload.locale,
+      url: payload.url,
+      wordsKey: payload.wordsKey,
     };
 
     return (await collection.insertOne(post)).insertedId;
@@ -207,7 +225,7 @@ export async function emitNewPost(s: {
   });
 
   (
-    await getAll([
+    await getAllUsers([
       {
         $match: {
           following: s.session.userId,
