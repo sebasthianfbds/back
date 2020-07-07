@@ -46,6 +46,13 @@ export async function createUser(user: IRegisterRequest) {
       type: user.type,
       instituicao: user.instituicao,
       interesses: user.interesses,
+      data: user.data,
+      cpf: user.cpf,
+      datai: user.datai,
+      estado: user.estado,
+      grau_escolaridade: user.grau_escolaridade,
+      link_curriculo: user.link_curriculo,
+      pais: user.pais,
     };
     await collection.insertOne(newUser);
   } catch (e) {

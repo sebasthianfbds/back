@@ -65,7 +65,25 @@ router.get("/search", async (req: IRequest, res: IResponse) => {
     });
     let result2 = await userCollection.getAllUsers(filter);
 
-    const results = result.concat(result2);
+    var results = result.concat(result2);
+
+    filter = [];
+
+    if (name) {
+      filter.push({
+        $match: {
+          interesses: { $in: [name] },
+        },
+      });
+    }
+    filter.push({
+      $project: {
+        notificationSubscription: 0,
+      },
+    });
+    let result3 = await userCollection.getAllUsers(filter);
+
+    results = result.concat(result3);
 
     res.ok(results);
   } catch (e) {
@@ -119,6 +137,23 @@ router.get("/profile", async (req: IRequest, res: IResponse) => {
     if (!userData.data)
       return res.badRequest(`Usuário '${name}' não encontrado.`);
 
+    for (let i = 0; i <= (userData.data.following || []).length; i++) {
+      let user = await userCollection.getUser([
+        { $match: { _id: new ObjectId(userData.data.following[i]) } },
+        {
+          $project: {
+            email: 0,
+            following: 0,
+            instituicao: 0,
+            interesses: 0,
+            password: 0,
+            type: 0,
+          },
+        },
+      ]);
+      if (user) userData.data.following[i] = user;
+    }
+
     userData.posts = await postColletion.getPosts({
       userId: session.userId,
       filter: [
@@ -136,11 +171,17 @@ router.get("/profile", async (req: IRequest, res: IResponse) => {
 
       if (
         p.existsSync(
-          "./uploads/posts/" + req.session.userId.toHexString() + "/" + post._id
+          "./uploads/posts/" +
+            new ObjectId(post.user._id).toHexString() +
+            "/" +
+            post._id
         )
       ) {
         files = p.readdirSync(
-          "./uploads/posts/" + req.session.userId.toHexString() + "/" + post._id
+          "./uploads/posts/" +
+            new ObjectId(post.user._id).toHexString() +
+            "/" +
+            post._id
         );
       }
       post.pdf = files.length > 0 ? files[0] : "";
@@ -159,9 +200,9 @@ router.get("/profile", async (req: IRequest, res: IResponse) => {
 
     if (
       p.existsSync("./uploads") &&
-      p.existsSync("./uploads/" + req.session.userId.toHexString())
+      p.existsSync("./uploads/" + userData.data._id.toHexString())
     ) {
-      files = p.readdirSync("./uploads/" + req.session.userId.toHexString());
+      files = p.readdirSync("./uploads/" + userData.data._id.toHexString());
     }
     userData.data.pdf = files.length > 0 ? files[0] : "";
 

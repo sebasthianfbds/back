@@ -21,4 +21,11 @@ export interface IRegisterRequest {
   type: string;
   instituicao: string;
   interesses: string[];
+  data: string;
+  cpf: string;
+  pais: string;
+  estado: string;
+  grau_escolaridade: string;
+  link_curriculo: string;
+  datai: string;
 }

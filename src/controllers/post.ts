@@ -60,7 +60,10 @@ router.get("/", async (req: IRequest, res: IResponse) => {
       post.canEdit = new ObjectId(post.user._id).equals(req.session.userId);
       var files = [];
       const path =
-        "./uploads/posts/" + req.session.userId.toHexString() + "/" + post._id;
+        "./uploads/posts/" +
+        new ObjectId(post.user._id).toHexString() +
+        "/" +
+        post._id;
 
       if (p.existsSync(path)) {
         files = p.readdirSync(path);
