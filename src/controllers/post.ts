@@ -2,7 +2,7 @@ import * as postCollection from "@collections/posts/posts";
 import { IPostPublishRequest } from "@interfaces/request/post";
 import { getUser } from "@collections/users/users";
 import { IRequest, IResponse } from "@interfaces/http/core";
-import { ObjectId } from "mongodb";
+import { ObjectId, ObjectId } from "mongodb";
 import { GetRouter } from "nd5-mongodb-server/core";
 import * as p from "fs";
 import { join } from "path";

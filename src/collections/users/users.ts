@@ -81,6 +81,7 @@ export async function updateUser(payload: IRequestUpdateUser) {
       delete payload._id;
       return payload;
     };
+
     await collection.findOneAndUpdate(
       { _id: new ObjectId(payload._id) },
       { $set: build(payload) }
@@ -108,6 +109,15 @@ export async function follow(payload: {
           },
         }
       );
+
+    await collection.updateOne(
+      { _id: payload.followingUserId },
+      {
+        $push: {
+          followers: payload.followerUserId,
+        },
+      }
+    );
   } catch (e) {
     throw "Erro ao seguir usuário: " + e;
   }
@@ -127,6 +137,11 @@ export async function unfollow(payload: {
         { _id: payload.followerUserId },
         { $pull: { following: payload.followingUserId } }
       );
+
+    await collection.updateOne(
+      { _id: payload.followingUserId },
+      { $pull: { following: payload.followerUserId } }
+    );
   } catch (e) {
     throw "Erro ao seguir usuário: " + e;
   }

@@ -6,6 +6,7 @@ export interface IUser {
   imageUrl?: string;
   notificationSubscription?: any;
   following?: any[];
+  followers?: any[];
   type?: string;
   details?: string;
   pdf?: string;

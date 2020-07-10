@@ -21,7 +21,12 @@ router.get("/sugestion", async (req: IRequest, res: IResponse) => {
     if (!user) return res.badRequest(`Usuário não encontrado.`);
 
     const sugestions = await userCollection.getAllUsers([
-      { $match: { _id: { $nin: user?.following || [] } } },
+      {
+        $match: {
+          _id: { $nin: user?.following || [] },
+          interesses: { $in: user.interesses },
+        },
+      },
       { $sample: { size: 5 } },
       { $limit: 5 },
     ]);
@@ -65,8 +70,6 @@ router.get("/search", async (req: IRequest, res: IResponse) => {
     });
     let result2 = await userCollection.getAllUsers(filter);
 
-    var results = result.concat(result2);
-
     filter = [];
 
     if (name) {
@@ -83,7 +86,7 @@ router.get("/search", async (req: IRequest, res: IResponse) => {
     });
     let result3 = await userCollection.getAllUsers(filter);
 
-    results = result.concat(result3);
+    const results = result.concat(result2).concat(result3);
 
     res.ok(results);
   } catch (e) {
@@ -152,6 +155,23 @@ router.get("/profile", async (req: IRequest, res: IResponse) => {
         },
       ]);
       if (user) userData.data.following[i] = user;
+    }
+
+    for (let i = 0; i <= (userData.data.followers || []).length; i++) {
+      let user = await userCollection.getUser([
+        { $match: { _id: new ObjectId(userData.data.followers[i]) } },
+        {
+          $project: {
+            email: 0,
+            following: 0,
+            instituicao: 0,
+            interesses: 0,
+            password: 0,
+            type: 0,
+          },
+        },
+      ]);
+      if (user) userData.data.followers[i] = user;
     }
 
     userData.posts = await postColletion.getPosts({
