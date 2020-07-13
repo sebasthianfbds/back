@@ -12,6 +12,7 @@ export interface IPostCollection {
   locale: string;
   url: string;
   wordsKey: string;
+  type: string;
 }
 export interface IPostComment {
   name: any;

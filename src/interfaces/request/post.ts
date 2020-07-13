@@ -11,6 +11,7 @@ export interface IPostPublishRequest {
   locale: string;
   url: string;
   wordsKey: string;
+  type: string;
 }
 
 export interface IPostCommentRequest {

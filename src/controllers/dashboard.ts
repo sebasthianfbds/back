@@ -28,6 +28,7 @@ router.get("/", async (req: IRequest, res: IResponse) => {
     var posts = [];
 
     const _posts = await postCollection.getAllPosts([
+      { $match: { type: "ARTIGO" } },
       {
         $project: {
           _id: true,

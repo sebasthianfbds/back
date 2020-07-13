@@ -207,6 +207,7 @@ export async function publish(payload: IPostPublishRequest): Promise<any> {
       locale: payload.locale,
       url: payload.url,
       wordsKey: payload.wordsKey,
+      type: payload.type,
     };
 
     return (await collection.insertOne(post)).insertedId;
