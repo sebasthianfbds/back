@@ -27,6 +27,11 @@ router.get("/sugestion", async (req: IRequest, res: IResponse) => {
           interesses: { $in: user.interesses },
         },
       },
+      {
+        $match: {
+          _id: { $nin: [req.session.userId] },
+        },
+      },
       { $sample: { size: 5 } },
       { $limit: 5 },
     ]);
