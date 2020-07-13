@@ -140,7 +140,7 @@ router.get("/profile", async (req: IRequest, res: IResponse) => {
     if (!userData.data)
       return res.badRequest(`Usuário '${name}' não encontrado.`);
 
-    for (let i = 0; i <= (userData.data.following || []).length; i++) {
+    for (let i = 0; i < (userData.data.following || []).length; i++) {
       let user = await userCollection.getUser([
         { $match: { _id: new ObjectId(userData.data.following[i]) } },
         {
@@ -157,7 +157,7 @@ router.get("/profile", async (req: IRequest, res: IResponse) => {
       if (user) userData.data.following[i] = user;
     }
 
-    for (let i = 0; i <= (userData.data.followers || []).length; i++) {
+    for (let i = 0; i < (userData.data.followers || []).length; i++) {
       let user = await userCollection.getUser([
         { $match: { _id: new ObjectId(userData.data.followers[i]) } },
         {
