@@ -43,6 +43,7 @@ export async function createUser(user: IRegisterRequest) {
       email: user.email,
       password: user.password,
       following: [],
+      followers: [],
       type: user.type,
       instituicao: user.instituicao,
       interesses: user.interesses,
